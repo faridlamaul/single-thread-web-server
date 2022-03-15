@@ -1,8 +1,10 @@
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileFilter;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.io.FilenameFilter;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.net.ServerSocket;
@@ -108,9 +110,96 @@ public class SingleThread {
                     }
                 }
             } else {
-                // get directory and file name when requests a directory that does not have index.html inside it
-                listDirectory(directoryPath);
-                System.out.println(directoryPath);
+                File dirPath = new File(directoryPath);
+                
+                //List of all files and directories
+                File files[] = dirPath.listFiles();
+                if (files != null) {
+                    String fileContent2 = "";
+                    fileContent2 += "<html>\r\n" + "<body>";
+
+                    for (File file : files) {
+                        contentType = Files.probeContentType(new File(file.getName()).toPath());
+                        fileContent = file.getName();
+                        if (contentType.equals("text/html")) {
+                            fis = new FileInputStream(file);
+                            fileContent = new String(fis.readAllBytes());
+
+                            statusCode = "200 OK";
+                            
+                            output.write("HTTP/1.1 " + statusCode + crlf);
+                            output.write("Content-Type: " + contentType + crlf);
+                            output.write("Content-Length: " + fileContent.length() + crlf + crlf);
+                            output.write(fileContent);
+                            output.flush();
+                        } else {
+                            fileContent2 += "<a href=\"" + file.getPath() + "\">" + file.getName() + "</a><br>";
+                        }
+                    }
+
+                    fileContent2 += "</body>\r\n" + "</html>";
+                    System.out.println(fileContent2);
+                    output.write("HTTP/1.1 200 OK" + crlf + crlf);
+                    output.write(fileContent2);
+                    output.flush();
+                } else {
+                    fileContent = "Directory not found";
+                    statusCode = "404 Not Found";
+                    
+                    System.out.println("Directory not found");
+                    output.write("HTTP/1.1 " + statusCode + crlf + crlf);
+                    output.write(fileContent);
+                    output.flush();
+                }
+
+                // for(File file : files) {
+                //     if (file.getName().equals("index.html")) {
+                //         try {
+                //             fis = new FileInputStream(directoryPath);
+                //             fileContent = new String(fis.readAllBytes());
+                            
+                //             statusCode = "200 OK";
+                //         } catch (FileNotFoundException e) {
+                //             fileContent = "File not found";
+                //             statusCode = "404 Not Found";
+                //         }
+            
+                //         output.write("HTTP/1.1 " + statusCode + crlf);
+                //         output.write("Content-Type: " + contentType + crlf);
+                //         output.write("Content-Length: " + fileContent.length() + crlf + crlf);
+                //         output.write(fileContent);
+                //         output.flush();
+                //     } else {
+                //         try {
+                //             fileContent = new String(Files.readAllBytes(file.toPath()));
+                //             System.out.println(fileContent);
+                //             statusCode = "200 OK";
+                //             System.out.println("File found");
+                        
+                //             output.write("HTTP/1.1 " + statusCode + crlf);
+                //             output.write("Content-Type: " + contentType + crlf);
+                //             output.write("Content-Length: " + fileContent.length() + crlf + crlf);
+
+                //             output.write(
+                //                 "<html><body><h2>" + file.getName() + "<h2></h2></html>" + crlf + crlf
+                //             );
+                //             output.flush();
+                //         } catch (Exception e) {
+                //             fileContent = "File not found";
+                //             statusCode = "404 Not Found";
+                            
+                //             System.out.println("File not found");
+                //             output.write("HTTP/1.1 " + statusCode + crlf + crlf);
+                //             output.write(fileContent);
+                //             output.flush();
+                //         }
+                //     }
+                //     System.out.println("File name: " + file.getName());
+                //     System.out.println("File path: " + file.getPath());
+                //     System.out.println("Last Modified Date: " + new java.util.Date(file.lastModified()));
+                //     System.out.println("Size :" + file.length() + " bytes");
+                //     System.out.println(" ");
+                // }
                 
             }
 
@@ -121,19 +210,19 @@ public class SingleThread {
         }
     }
 
-    public static void listDirectory(String path) {
-        File directoryPath = new File(path);
+    // public static void listDirectory(String path) {
+    //     File dirPath = new File(path);
 
-        //List of all files and directories
-        File filesList[] = directoryPath.listFiles();
-        System.out.println("List of files and directories in the specified directory:");
-        for(File file : filesList) {
-            System.out.println("File name: " + file.getName());
-            System.out.println("File path: " + file.getPath());
-            System.out.println("Last Modified Date: " + new java.util.Date(file.lastModified()));
-            System.out.println("Size :" + file.length()+" bytes");
-            System.out.println(" ");
-        }
-    }
+    //     //List of all files and directories
+    //     File files[] = dirPath.listFiles();
+    //     System.out.println("List of files and directories in the specified directory:");
+    //     for(File file : files) {
+    //         System.out.println("File name: " + file.getName());
+    //         System.out.println("File path: " + file.getPath());
+    //         System.out.println("Last Modified Date: " + new java.util.Date(file.lastModified()));
+    //         System.out.println("Size :" + file.length()+" bytes");
+    //         System.out.println(" ");
+    //     }
+    // }
 }
 
