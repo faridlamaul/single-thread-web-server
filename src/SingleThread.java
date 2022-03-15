@@ -3,8 +3,10 @@ import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
+import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.nio.file.Files;
@@ -12,15 +14,17 @@ import java.nio.file.Path;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.Date;
+import java.util.Properties;
 
 public class SingleThread {
     public static void main(String[] args) throws Exception {
         try {
-            // directory root 
-            String websiteRoot = "/home/faridlamaul/Project/Kuliah/Progjar/single-thread-web-server/root/";
-            
             // initialize variables
-            int port = 2022;
+            int port;
+            String ip;
+            String serverName;
+            String hostName;
+            String DocumentRoot = "";
             String crlf = "\r\n";
             String contentType;
             String fileContent;
@@ -34,14 +38,42 @@ public class SingleThread {
             Path path;
             String mimeType;
             
+            Properties prop = new Properties();
+            String configFile = "/home/faridlamaul/Project/Kuliah/Progjar/single-thread-web-server/src/2022-progjarc.conf";
+            
+            try {
+                FileInputStream in = new FileInputStream(configFile);
+                prop.load(in);
+            } catch (FileNotFoundException e) {
+                System.out.println("File not found");
+            }
+            
+            ip = prop.getProperty("ip");
+            System.out.println("IP : " + ip);
+            port = Integer.parseInt(prop.getProperty("port"));
+
+            // directory root 
+            // String DocumentRoot = "/home/faridlamaul/Project/Kuliah/Progjar/single-thread-web-server/DocumentRoot/";
+        
             // create server socket
             ServerSocket server = new ServerSocket(port);
             while(true) {
-
+                
                 System.out.println("******* Server started in port " + port + " *******");
-    
+                
                 // listen for client
                 Socket client = server.accept();
+                hostName = client.getInetAddress().getHostName();
+                System.out.println("Host Name : " + hostName);
+
+                if (hostName.equals(prop.getProperty("servername1"))) {
+                    DocumentRoot = new String(prop.getProperty("documentroot1"));
+                    System.out.println("DocumentRoot : " + DocumentRoot);
+                } else if (hostName.equals(prop.getProperty("servername2"))) {
+                    DocumentRoot = new String(prop.getProperty("documentroot2"));
+                    System.out.println("DocumentRoot : " + DocumentRoot);
+                }
+
                 System.out.println("*******      Client connected       *******");
                 
                 // create input and output streams
@@ -63,7 +95,7 @@ public class SingleThread {
                 contentType = mimeType;
     
                 // get path of file
-                directoryPath = websiteRoot + urn;
+                directoryPath = DocumentRoot + urn;
                 
                 // get path of current directory
                 currDirectoryPath = directoryPath.substring(directoryPath.lastIndexOf("/") + 1);
