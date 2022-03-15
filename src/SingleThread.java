@@ -1,10 +1,8 @@
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
-import java.io.FileFilter;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
-import java.io.FilenameFilter;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.net.ServerSocket;
@@ -19,7 +17,7 @@ public class SingleThread {
     public static void main(String[] args) throws Exception {
         try {
             // directory root 
-            String websiteRoot = "D:\\Coolyeah/Jurusan/SMT6/Progjar/tugas/single-thread-web-server/root/";
+            String websiteRoot = "/home/faridlamaul/Project/Kuliah/Progjar/single-thread-web-server/root/";
             
             // initialize variables
             int port = 2022;
@@ -31,6 +29,7 @@ public class SingleThread {
             String urn;
             String fileName;
             String directoryPath;
+            String currDirectoryPath;
             FileInputStream fis;
             Path path;
             String mimeType;
@@ -39,11 +38,11 @@ public class SingleThread {
             ServerSocket server = new ServerSocket(port);
             while(true) {
 
-                System.out.println("***** Server started in port " + port + " *****");
+                System.out.println("******* Server started in port " + port + " *******");
     
                 // listen for client
                 Socket client = server.accept();
-                System.out.println("***** Client connected *****");
+                System.out.println("*******      Client connected       *******");
                 
                 // create input and output streams
                 BufferedReader reader = new BufferedReader(new InputStreamReader(client.getInputStream()));
@@ -51,11 +50,9 @@ public class SingleThread {
     
                 // read request
                 message = reader.readLine();
-                System.out.println(message);
                 urn = message.split(" ")[1];
                 System.out.println(urn);
                 urn = urn.substring(1);
-                System.out.println(urn);
     
                 // get file name ex. file.pdf or file.html
                 fileName = urn.substring(urn.lastIndexOf("/") + 1);
@@ -67,7 +64,10 @@ public class SingleThread {
     
                 // get path of file
                 directoryPath = websiteRoot + urn;
-    
+                
+                // get path of current directory
+                currDirectoryPath = directoryPath.substring(directoryPath.lastIndexOf("/") + 1);
+
                 // request is a directory or file
                 if (urn.contains(".")) {
     
@@ -78,6 +78,7 @@ public class SingleThread {
                             fileContent = new String(fis.readAllBytes());
                             
                             statusCode = "200 OK";
+
                         } catch (FileNotFoundException e) {
                             fileContent = "File not found";
                             statusCode = "404 Not Found";
@@ -88,7 +89,7 @@ public class SingleThread {
                         output.write("Content-Length: " + fileContent.length() + crlf + crlf);
                         output.write(fileContent);
                         output.flush();
-    
+
                     } else {
                         try {
                             fis = new FileInputStream(directoryPath);
@@ -103,6 +104,7 @@ public class SingleThread {
                             output.write("Content-Disposition: attachment; filename=" + "\"" + fileName + "\"" + crlf + crlf);
                             output.write(fileContent);
                             output.flush();
+
                         } catch (FileNotFoundException e) {
                             fileContent = "File not found";
                             statusCode = "404 Not Found";
@@ -130,9 +132,12 @@ public class SingleThread {
                             + "</tr>";
     
                         for (File file : files) {
+
                             contentType = Files.probeContentType(new File(file.getName()).toPath());
                             fileContent = file.getName();
-                            if (contentType.equals("text/html")) {
+                            Date lastModified = new Date(file.lastModified());
+                            
+                            if (file.getName().equals("index.html")) {
                                 fis = new FileInputStream(file);
                                 fileContent = new String(fis.readAllBytes());
     
@@ -143,10 +148,11 @@ public class SingleThread {
                                 output.write("Content-Length: " + fileContent.length() + crlf + crlf);
                                 output.write(fileContent);
                                 output.flush();
+
                             } else {
                                 fileContent2 += "<tr>";
-                                fileContent2 += "<td><a href=\"" + file.getPath() + "\">" + file.getName() + "</a></td>";
-                                fileContent2 += "<td>" + new Date(file.lastModified()) + "</td>";
+                                fileContent2 += "<td><a href=\"" + currDirectoryPath + "/" + file.getName() + "\">" + file.getName() + "</a></td>";
+                                fileContent2 += "<td>" + lastModified + "</td>";
                                 fileContent2 += "<td>" + file.length() + " Bytes</td>";
                                 fileContent2 += "</tr>";
                             }
@@ -158,7 +164,9 @@ public class SingleThread {
                         output.write("HTTP/1.1 200 OK" + crlf + crlf);
                         output.write(fileContent2);
                         output.flush();
+
                     } else {
+
                         fileContent = "Directory not found";
                         statusCode = "404 Not Found";
                         
@@ -166,12 +174,14 @@ public class SingleThread {
                         output.write("HTTP/1.1 " + statusCode + crlf + crlf);
                         output.write(fileContent);
                         output.flush();
+
                     }
-                    
                 }
+
                 while(message.isEmpty()) {
                     message = reader.readLine();
                 }
+
                 client.close();
             }
             // server.close();
@@ -179,20 +189,5 @@ public class SingleThread {
             Logger.getLogger(SingleThread.class.getName()).log(Level.SEVERE, null, e);
         }
     }
-
-    // public static void listDirectory(String path) {
-    //     File dirPath = new File(path);
-
-    //     //List of all files and directories
-    //     File files[] = dirPath.listFiles();
-    //     System.out.println("List of files and directories in the specified directory:");
-    //     for(File file : files) {
-    //         System.out.println("File name: " + file.getName());
-    //         System.out.println("File path: " + file.getPath());
-    //         System.out.println("Last Modified Date: " + new java.util.Date(file.lastModified()));
-    //         System.out.println("Size :" + file.length()+" bytes");
-    //         System.out.println(" ");
-    //     }
-    // }
 }
 
