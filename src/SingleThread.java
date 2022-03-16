@@ -54,9 +54,11 @@ public class SingleThread {
 
             // directory root 
             // String DocumentRoot = "/home/faridlamaul/Project/Kuliah/Progjar/single-thread-web-server/DocumentRoot/";
-        
+            
+            InetAddress addr = InetAddress.getByName(ip);
+
             // create server socket
-            ServerSocket server = new ServerSocket(port);
+            ServerSocket server = new ServerSocket(port, 0, addr);
             while(true) {
                 
                 System.out.println("******* Server started in port " + port + " *******");
